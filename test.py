@@ -2,11 +2,13 @@
        index (id),
         title,
         description,
-        status,in:(pending, ongoing, finished)
+        status;in:(pending, ongoing, finished),
+        deadline,
         ]
 """
-Tasks=[{"title":"Python 1","description":"I have homework","status":"pending"},{"title":"C#","description":"I have exam","status":"ongoing"},
-{"title":"Java ","description":"final exam","status":"finished"},{"title":"C++","description":"I have final","status":"pending"} ]
+from datetime import datetime, date 
+import json
+import os
 
 User_input_show=["s","show","sh","sho"];
 User_input_create=["c","create","cr","cre","crea","creat","new","n","add","a","ad"];
@@ -17,6 +19,7 @@ statuses=["pending","ongoing","finished"];
 User_input_status_pending=["pending","p","pen","pend","pendi","pendin"]
 User_input_status_ongoing=["ongoing","o","on","ong","ongo","ongoi","ongoin","continue","con"]
 User_input_status_finished=["finished","finish","end","f","fi","fin","fini","finis","finishe"]
+
 
 
 #Check user input (number or index) if it exists in our list
@@ -87,9 +90,24 @@ def Change_status(Task):
 def Task_detail(index):
    
    Task=Tasks[index]
+   today = datetime.now() 
    print(f'The task number {index+1} :')
    for key,value in Task.items():
          print(f'{key} : {value} ')
+
+         if key=="status" and value=="finished":
+          break
+   
+         if key=="deadline":
+            days_left =abs(value - today)  
+            print("The remaining days are: ",days_left)
+            if days_left.days in range(0,7):
+               print("The priority of this task is high")
+            elif days_left.days in range(8,15):
+               print("The priority of this task is medium")
+            else:
+               print("The priority of this task is low")
+
    print("*****************************************************************")
 
 
@@ -118,6 +136,19 @@ def Task_update(index):
          if Message(f"change the {key}"):
             if key=='status':
                Task=Change_status(Task)
+            elif key=='deadline':
+             while True:
+               user_deadline=input("Please,Enter a deadline (YYYY-MM-DD HH:MM:SS): ")
+               try:
+                  deadline=datetime.strptime(user_deadline,"%Y-%m-%d %H:%M:%S")
+
+                  if deadline < datetime.now():
+                     print("Invalid deadline! Deadline  must be greater than today's date.")
+                  else:
+                   Task[key]= deadline
+                   break 
+               except ValueError:
+                  print("Invalid date format! Please enter the deadline in YYYY-MM-DD format.")
             else:
               Task[key]=input(f"Please,enter the new { key} ?")
    Tasks[index]=Task
@@ -168,6 +199,95 @@ def Task_Search():
               return -1
    
 
+def Task_Sort():
+   
+   # Priority lists
+   High_priority = []
+   Medium_priority = []
+   Low_priority = []
+   today=datetime.now()
+   # Categorize tasks by deadline
+   for index,Task in enumerate(Tasks):
+      for key,value in Task.items():
+
+         if key=="status" and value=="finished":
+          break
+   
+         if key=="deadline":
+      
+            # Calculate days left for the deadline
+            days_left = (value - today).days
+            # Categorize tasks based on days left
+            if 0 <= days_left <= 7:
+               High_priority.append(Task)
+            elif 8 <= days_left <= 15:
+               Medium_priority.append(Task)
+            else:
+               Low_priority.append(Task)
+
+   if High_priority:
+   
+      print("----------------------------------------------------------------------------------")
+      print("High priority tasks")
+      print("----------------------------------------------------------------------------------")
+      High_priority.sort(key = lambda x:x['deadline'])
+      
+      for Task in High_priority:
+         print("Title: ", Task['title'])
+         print("Description: ", Task['description'])
+         print("Deadline: ", Task['deadline'])
+         print("Status: ", Task['status'])
+        
+
+   if Medium_priority:
+      print("----------------------------------------------------------------------------------")
+      print("Medium priority tasks")
+      print("----------------------------------------------------------------------------------")
+      Medium_priority.sort(key = lambda x:x['deadline'])
+      for Task in Medium_priority:
+         print("Title: ", Task['title'])
+         print("Description: ", Task['description'])
+         print("Deadline: ", Task['deadline'])
+         print("Status: ", Task['status'])
+        
+
+      
+   if Low_priority:
+      print("----------------------------------------------------------------------------------")
+      print("Low priority tasks")
+      print("----------------------------------------------------------------------------------")
+      Low_priority.sort(key = lambda x:x['deadline'])
+      for Task in Low_priority:
+         print("Title: ", Task['title'])
+         print("Description: ", Task['description'])
+         print("Deadline: ", Task['deadline'])
+         print("Status: ", Task['status'])
+        
+
+# the file path
+file_path = 'Tasks.json'
+
+
+
+if os.path.exists(file_path):
+   try:
+      with open(file_path, 'r') as Tasks_file:
+            Tasks = json.load(Tasks_file)
+            # Convert stringified datetime back to datetime objects
+            for task in Tasks:
+               task['deadline'] = datetime.strptime(task['deadline'], "%Y-%m-%d %H:%M:%S")
+
+      print("---------------------------------------------------------------------\n")
+      print("Tasks have been loaded from the file.\n")
+   except Exception as e:
+      print("---------------------------------------------------------------------\n")
+      print(f"Error loading tasks from file: {e}")
+      quit()
+      
+else:
+   print("No task file found, starting with an empty task list.\n")
+
+
 
 #This creates an infinite loop that will repeatedly prompt the user for input until they decide to exit.
 while True:
@@ -191,9 +311,21 @@ while True:
       print("-----------------------------Create a task----------------------------")
       name=input("Please,enter the task title: ")
       description=input("Please,enter the task description: ")
+      while True:
+         user_deadline=input("Please,Enter a deadline (YYYY-MM-DD HH:MM:SS): ")
+         try:
+            deadline=datetime.strptime(user_deadline,"%Y-%m-%d %H:%M:%S")
+            if deadline < datetime.now():
+               print("Invalid deadline! Deadline  must be greater than today's date.")
+            else:
+               break
+         except ValueError:
+            print("Invalid date format! Please enter the deadline in YYYY-MM-DD format.")
+            
+
       status=Check_status()
       if status in statuses:
-         new_task={"title":name ,"description":description,"status":status}
+         new_task={"title":name ,"description":description,"status":status,"deadline":deadline}
          Tasks.append(new_task)
          print("The task has been added successfully.\n")
       else:
@@ -208,12 +340,16 @@ while True:
       # Show all tasks
       for index in range(0,len(Tasks)):
          Task_detail(index)
+      if Message("Sort tasks by their priority"):
+         Task_Sort()
+
       if Message("filter the tasks  by their status"):
          status=Check_status()
          if status in statuses:
             Filter_status(status)
          else:
             print("Error,invalid status. Try Again.\n")
+   
 
 
 
@@ -251,18 +387,21 @@ while True:
       else:
          print("Please,Try_Again Later")
       
-      
-   
-
-
-
-
     elif select in User_input_exit : 
         print("---------------------------------------------------------------------")
         print(" Thank you for using me! Work hard! ")
-        print("---------------------------------------------------------------------")
+        
         break
 
     else:
         print("---------------------------------------------------------------------")
         print(" Invalid income, please enter please enter the correct choice.")
+
+try:
+   with open(file_path, 'w') as Tasks_file:
+      json.dump(Tasks, Tasks_file, default=str, indent=4)
+      print(" Tasks have been saved to the file.\n")
+      print("---------------------------------------------------------------------")
+except Exception as e:
+   print(f"Error saving tasks to file: {e}")
+   print("---------------------------------------------------------------------")
