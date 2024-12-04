@@ -9,7 +9,7 @@
         "title": "C#",
         "description": "I have exam",
         "status": "ongoing",
-        "deadline": "2024-11-29 00:00:00"
+        "deadline": "2025-01-22 00:00:00"
     },
     {
         "title": "Java ",
@@ -21,12 +21,6 @@
         "title": "C++",
         "description": "I have final",
         "status": "pending",
-        "deadline": "2025-01-01 00:00:00"
-    },
-    {
-        "title": "MAlak",
-        "description": "kdkdkd",
-        "status": "pending",
-        "deadline": "2025-01-01 23:00:00"
+        "deadline": "2024-12-13 00:00:00"
     }
 ]
